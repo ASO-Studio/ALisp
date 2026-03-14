@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -rdynamic #-DDEBUG
+CFLAGS = -Wall -Wextra -rdynamic -O2
 M_TARGET = alisp
 L_TARGET = libepl.so
 TARGETS = $(M_TARGET) $(L_TARGET)
