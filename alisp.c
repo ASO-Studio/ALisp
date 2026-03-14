@@ -1,5 +1,6 @@
 #include "alisp.h"
 #include "alisp_utils.h"
+#include "xalloc.h"
 #include <setjmp.h>
 #include <stdarg.h>
 
@@ -10,9 +11,7 @@ char error_msg[256];
 // Make a null value
 alisp_value_t *alisp_make_null()
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_NULL;
 	return val;
 }
@@ -20,9 +19,7 @@ alisp_value_t *alisp_make_null()
 // Make a number value
 alisp_value_t *alisp_make_number(double num)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_NUMBER;
 	val->value.number = num;
 	return val;
@@ -31,16 +28,9 @@ alisp_value_t *alisp_make_number(double num)
 // Make a symbol value
 alisp_value_t *alisp_make_symbol(const char *sym)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_SYMBOL;
-	val->value.symbol = malloc(strlen(sym) + 1);
-	if (!val->value.symbol)
-	{
-		free(val);
-		return NULL;
-	}
+	val->value.symbol = xmalloc(strlen(sym) + 1);
 	strcpy(val->value.symbol, sym);
 	return val;
 }
@@ -48,16 +38,9 @@ alisp_value_t *alisp_make_symbol(const char *sym)
 // Make a string value
 alisp_value_t *alisp_make_string(const char *str)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_STRING;
-	val->value.string = malloc(strlen(str) + 1);
-	if (!val->value.string)
-	{
-		free(val);
-		return NULL;
-	}
+	val->value.string = xmalloc(strlen(str) + 1);
 	strcpy(val->value.string, str);
 	return val;
 }
@@ -65,9 +48,7 @@ alisp_value_t *alisp_make_string(const char *str)
 // Make a primitive function value
 alisp_value_t *alisp_make_primitive(alisp_primitive_func_t func)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_PRIMITIVE;
 	val->value.primitive = func;
 	return val;
@@ -76,9 +57,7 @@ alisp_value_t *alisp_make_primitive(alisp_primitive_func_t func)
 // Make a lambda value
 alisp_value_t *alisp_make_lambda(alisp_value_t *params, alisp_value_t *body, alisp_env_t env)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_LAMBDA;
 	val->value.lambda.parameters = params;
 	val->value.lambda.body = body;
@@ -89,9 +68,7 @@ alisp_value_t *alisp_make_lambda(alisp_value_t *params, alisp_value_t *body, ali
 // Make a pair (cons cell)
 alisp_value_t *alisp_make_pair(alisp_value_t *car, alisp_value_t *cdr)
 {
-	alisp_value_t *val = malloc(sizeof(alisp_value_t));
-	if (!val)
-		return NULL;
+	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_PAIR;
 	val->value.pair.car = car;
 	val->value.pair.cdr = cdr;
@@ -206,9 +183,7 @@ alisp_value_t *alisp_copy(alisp_value_t *val)
 	if (!val)
 		return NULL;
 
-	alisp_value_t *copy = malloc(sizeof(alisp_value_t));
-	if (!copy)
-		return NULL;
+	alisp_value_t *copy = xmalloc(sizeof(alisp_value_t));
 
 	copy->type = val->type;
 
@@ -221,21 +196,11 @@ alisp_value_t *alisp_copy(alisp_value_t *val)
 		copy->value.number = val->value.number;
 		break;
 	case ALISP_SYMBOL:
-		copy->value.symbol = malloc(strlen(val->value.symbol) + 1);
-		if (!copy->value.symbol)
-		{
-			free(copy);
-			return NULL;
-		}
+		copy->value.symbol = xmalloc(strlen(val->value.symbol) + 1);
 		strcpy(copy->value.symbol, val->value.symbol);
 		break;
 	case ALISP_STRING:
-		copy->value.string = malloc(strlen(val->value.string) + 1);
-		if (!copy->value.string)
-		{
-			free(copy);
-			return NULL;
-		}
+		copy->value.string = xmalloc(strlen(val->value.string) + 1);
 		strcpy(copy->value.string, val->value.string);
 		break;
 	case ALISP_PRIMITIVE:
@@ -300,9 +265,7 @@ static alisp_value_t *parse_atom(const char *input, int *pos)
 		if (input[*pos] != '"')
 			return ALISP_ERROR("Unterminated string");
 
-		char *str = malloc(*pos - start + 1);
-		if (!str)
-			return alisp_make_error("Memory allocation failed");
+		char *str = xmalloc(*pos - start + 1);
 
 		strncpy(str, input + start, *pos - start);
 		str[*pos - start] = '\0';
@@ -321,15 +284,13 @@ static alisp_value_t *parse_atom(const char *input, int *pos)
 			(*pos)++;
 		}
 
-		char *num_str = malloc(*pos - start + 1);
-		if (!num_str)
-			return alisp_make_error("Memory allocation failed");
+		char *num_str = xmalloc(*pos - start + 1);
 
 		strncpy(num_str, input + start, *pos - start);
 		num_str[*pos - start] = '\0';
 
 		double num = atof(num_str);
-		free(num_str);
+		xfree(num_str);
 		return alisp_make_number(num);
 	}
 
@@ -343,9 +304,7 @@ static alisp_value_t *parse_atom(const char *input, int *pos)
 	if (*pos == start)
 		return ALISP_ERROR("Unexpected character");
 
-	char *sym = malloc(*pos - start + 1);
-	if (!sym)
-		return alisp_make_error("Memory allocation failed");
+	char *sym = xmalloc(*pos - start + 1);
 
 	strncpy(sym, input + start, *pos - start);
 	sym[*pos - start] = '\0';
@@ -988,10 +947,10 @@ void alisp_free(alisp_value_t *val)
 	switch (val->type)
 	{
 	case ALISP_SYMBOL:
-		free(val->value.symbol);
+		xfree(val->value.symbol);
 		break;
 	case ALISP_STRING:
-		free(val->value.string);
+		xfree(val->value.string);
 		break;
 	case ALISP_PAIR:
 		alisp_free(val->value.pair.car);
@@ -1005,7 +964,7 @@ void alisp_free(alisp_value_t *val)
 		break;
 	}
 
-	free(val);
+	xfree(val);
 }
 
 // Destroy environment and all contained values
@@ -1030,7 +989,7 @@ void alisp_destroy(alisp_env_t env)
 
 	// Free the environment pair itself
 	// Note: Don't recursively destroy outer env if it's shared
-	free(env);
+	xfree(env);
 }
 
 // Initialize the default environment with built-in functions

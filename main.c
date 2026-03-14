@@ -1,5 +1,6 @@
 #include "alisp.h"
 #include "alisp_utils.h"
+#include "xalloc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -188,13 +189,10 @@ int main(int argc, char *argv[])
 	file_size = ftell(fp);
 	rewind(fp);
 
-	if ((file_content = malloc(file_size)) == NULL)
-	{
-		fclose(fp);
-		return 1;
-	}
+	file_content = xmalloc(file_size + 1);
 
 	fread(file_content, 1, file_size, fp);
+	file_content[file_size] = '\0';
 	fclose(fp);
 
 	env = alisp_make_default_env();
@@ -208,10 +206,10 @@ int main(int argc, char *argv[])
 	}
 	else if (result)
 	{
-		alisp_free(result);  // Free the copied result
+		alisp_free(result);
 	}
 	alisp_destroy(env);
-	free(file_content);
+	xfree(file_content);
 
 	return ret;
 }

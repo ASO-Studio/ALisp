@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g -rdynamic
+CFLAGS = -Wall -Wextra -g -rdynamic #-DDEBUG
 M_TARGET = alisp
 L_TARGET = libepl.so
 TARGETS = $(M_TARGET) $(L_TARGET)
 
-M_SOURCES = alisp.c main.c alisp_utils.c
+M_SOURCES = alisp.c main.c alisp_utils.c xalloc.c
 L_SOURCES = libepl.c
 
 M_OBJECTS = $(M_SOURCES:.c=.o)
