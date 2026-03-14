@@ -1,5 +1,5 @@
-#ifndef ALISP_H
-#define ALISP_H
+#ifndef _ALISP_H
+#define _ALISP_H 1
 
 #include <ctype.h>
 #include <setjmp.h>
@@ -22,8 +22,11 @@ typedef enum
 // Forward declaration
 typedef struct alisp_value alisp_value_t;
 
+// Environment structure (list of bindings)
+typedef alisp_value_t *alisp_env_t;
+
 // Function pointer for primitive functions
-typedef alisp_value_t *(*alisp_primitive_func_t)(alisp_value_t *args);
+typedef alisp_value_t *(*alisp_primitive_func_t)(alisp_env_t env, alisp_value_t *args);
 
 // Lambda function structure
 typedef struct
@@ -50,9 +53,6 @@ typedef struct alisp_value
 		} pair;
 	} value;
 } alisp_value_t;
-
-// Environment structure (list of bindings)
-typedef alisp_value_t *alisp_env_t;
 
 // Error handling
 #define ALISP_ERROR(msg) alisp_make_error(msg)
@@ -109,4 +109,4 @@ void alisp_destroy(alisp_env_t env);
 // Error checking
 int alisp_is_error(alisp_value_t *val);
 
-#endif // ALISP_H
+#endif // _ALISP_H

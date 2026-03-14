@@ -427,8 +427,9 @@ alisp_value_t *alisp_read(const char *input)
 }
 
 // Primitive function implementations
-static alisp_value_t *prim_add(alisp_value_t *args)
+static alisp_value_t *prim_add(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	double result = 0.0;
 	alisp_value_t *current = args;
 
@@ -446,8 +447,9 @@ static alisp_value_t *prim_add(alisp_value_t *args)
 	return alisp_make_number(result);
 }
 
-static alisp_value_t *prim_sub(alisp_value_t *args)
+static alisp_value_t *prim_sub(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	if (args->type != ALISP_PAIR)
 		return ALISP_ERROR("Wrong number of arguments to -");
 
@@ -474,8 +476,9 @@ static alisp_value_t *prim_sub(alisp_value_t *args)
 	return alisp_make_number(result);
 }
 
-static alisp_value_t *prim_mul(alisp_value_t *args)
+static alisp_value_t *prim_mul(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	double result = 1.0;
 	alisp_value_t *current = args;
 
@@ -493,8 +496,9 @@ static alisp_value_t *prim_mul(alisp_value_t *args)
 	return alisp_make_number(result);
 }
 
-static alisp_value_t *prim_div(alisp_value_t *args)
+static alisp_value_t *prim_div(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	if (args->type != ALISP_PAIR)
 		return ALISP_ERROR("Wrong number of arguments to /");
 
@@ -525,8 +529,9 @@ static alisp_value_t *prim_div(alisp_value_t *args)
 	return alisp_make_number(result);
 }
 
-static alisp_value_t *prim_eq(alisp_value_t *args)
+static alisp_value_t *prim_eq(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	if (args->type != ALISP_PAIR || args->value.pair.cdr->type != ALISP_PAIR ||
 		args->value.pair.cdr->value.pair.cdr->type != ALISP_NULL)
 	{
@@ -539,8 +544,9 @@ static alisp_value_t *prim_eq(alisp_value_t *args)
 	return alisp_make_number(alisp_eq(a, b) ? 1 : 0);
 }
 
-static alisp_value_t *prim_less_than(alisp_value_t *args)
+static alisp_value_t *prim_less_than(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	if (args->type != ALISP_PAIR || args->value.pair.cdr->type != ALISP_PAIR ||
 		args->value.pair.cdr->value.pair.cdr->type != ALISP_NULL)
 	{
@@ -558,8 +564,9 @@ static alisp_value_t *prim_less_than(alisp_value_t *args)
 	return alisp_make_number(a->value.number < b->value.number ? 1 : 0);
 }
 
-static alisp_value_t *prim_greater_than(alisp_value_t *args)
+static alisp_value_t *prim_greater_than(alisp_env_t env, alisp_value_t *args)
 {
+	(void)env;
 	if (args->type != ALISP_PAIR || args->value.pair.cdr->type != ALISP_PAIR ||
 		args->value.pair.cdr->value.pair.cdr->type != ALISP_NULL)
 	{
@@ -875,7 +882,7 @@ alisp_value_t *alisp_eval(alisp_value_t *expr, alisp_env_t env)
 
 		if (func->type == ALISP_PRIMITIVE)
 		{
-			return func->value.primitive(args);
+			return func->value.primitive(env, args);
 		}
 		else if (func->type == ALISP_LAMBDA)
 		{

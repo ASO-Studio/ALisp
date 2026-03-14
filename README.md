@@ -24,11 +24,11 @@ make && make run
 
 ## Builtin functions/features
 
-### print
+1. print, include\_native
 
-### +, -, \*, /, >, <, =
+2. +, -, \*, /, >, <, =
 
-### function, define, if-elseif-else
+3. function, define, if-elseif-else
 
 ## Contributing
 
