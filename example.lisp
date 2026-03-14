@@ -13,3 +13,4 @@ else
 )
 
 (function test (x) (return x))
+(print (test 1))

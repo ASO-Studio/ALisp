@@ -1,4 +1,5 @@
 #include "alisp.h"
+#include "alisp_utils.h"
 #include <setjmp.h>
 #include <stdarg.h>
 
@@ -1062,4 +1063,86 @@ int alisp_is_error(alisp_value_t *val)
 				strncmp(val->value.string, "Error", 5) == 0 || strncmp(val->value.string, "Unterminated", 12) == 0);
 	}
 	return 0;
+}
+
+// Execute Lisp code from a string (processes multiple expressions)
+alisp_value_t *alisp_execute(const char* content, alisp_env_t env)
+{
+	// This function needs to be used carefully since the ALisp implementation
+	// uses global state for error handling (setjmp/longjmp)
+	// For this implementation, we'll use a single global error handling context
+	// which means this function is not thread-safe
+
+	// Handle both parsing and evaluation with a single error context
+	int pos = 0;
+	alisp_value_t *last_result = NULL;
+	
+	if (setjmp(error_jmp) != 0)
+	{
+		// An error occurred during either parsing or evaluation
+		// The error is already stored in error_msg via longjmp
+		// Create an error value to return
+		// Create a new string with the error message
+		alisp_value_t *error_result = alisp_make_string(error_msg);
+		
+		// Clean up environment
+		alisp_destroy(env);
+		
+		return error_result;
+	}
+	
+	// Loop through all expressions in the content
+	while (1)
+	{
+		// Skip whitespace
+		while (content[pos] && isspace(content[pos]))
+		{
+			pos++;
+		}
+		
+		// If we've reached the end of content, break
+		if (!content[pos])
+		{
+			break;
+		}
+		
+		// Parse the next expression
+		alisp_value_t *expr = alisp_parse(content, &pos);
+		if (!expr)
+		{
+			// If parsing failed, exit the loop
+			break;
+		}
+
+		// Evaluate the expression
+		alisp_value_t *result = alisp_eval(expr, env);
+		
+		// Free the expression but keep the result
+		alisp_free(expr);
+		
+		// If this is not a null result, store it as the last result
+		if (result && result->type != ALISP_NULL)
+		{
+			// Free the previous last result if it exists
+			if (last_result)
+			{
+				alisp_free(last_result);
+			}
+			// Copy the result to preserve it after environment is destroyed
+			last_result = alisp_copy(result);
+		}
+		else
+		{
+			// Free the null result since we don't need to keep it
+			if (result)
+			{
+				alisp_free(result);
+			}
+		}
+	}
+	
+	// Clean up environment
+	alisp_destroy(env);
+	
+	return last_result;
 }

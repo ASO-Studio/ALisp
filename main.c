@@ -7,7 +7,7 @@
 
 #define ALISP_REPL_BUFFER_SIZE 1024
 
-int main()
+int shell_main()
 {
 	printf("aLisp - A minimal Lisp interpreter in C\n");
 	printf("Type 'exit' or 'quit' to quit.\n\n");
@@ -160,4 +160,58 @@ int main()
 
 	printf("Goodbye!\n");
 	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc <= 1)
+	{ // No arguments gave
+		return shell_main();
+	}
+
+	const char *file = argv[1];
+	char *file_content = NULL;
+	FILE *fp = fopen(file, "r");
+	long file_size = 0;
+	int ret = 0;
+	alisp_value_t *result = NULL;
+	alisp_env_t env;
+
+	if (!fp)
+	{
+		perror("fopen");
+		return 1;
+	}
+
+	// Seek to the end of the file then use ftell() to get the size of file
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+	rewind(fp);
+
+	if ((file_content = malloc(file_size)) == NULL)
+	{
+		fclose(fp);
+		return 1;
+	}
+
+	fread(file_content, 1, file_size, fp);
+	fclose(fp);
+
+	env = alisp_make_default_env();
+	alisp_utils_register_all(env);
+
+	result = alisp_execute(file_content, env);
+	if (alisp_is_error(result))
+	{
+		fprintf(stderr, "Error: %s\n", result->value.string);
+		ret = 1;
+	}
+	else if (result)
+	{
+		alisp_free(result);  // Free the copied result
+	}
+	alisp_destroy(env);
+	free(file_content);
+
+	return ret;
 }

@@ -109,4 +109,7 @@ void alisp_destroy(alisp_env_t env);
 // Error checking
 int alisp_is_error(alisp_value_t *val);
 
+// Execute Lisp code from a string
+alisp_value_t *alisp_execute(const char* content, alisp_env_t env);
+
 #endif // _ALISP_H
