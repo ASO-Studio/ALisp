@@ -30,8 +30,7 @@ alisp_value_t *alisp_make_symbol(const char *sym)
 {
 	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_SYMBOL;
-	val->value.symbol = xmalloc(strlen(sym) + 1);
-	strcpy(val->value.symbol, sym);
+	val->value.symbol = xstrdup(sym);
 	return val;
 }
 
@@ -40,8 +39,7 @@ alisp_value_t *alisp_make_string(const char *str)
 {
 	alisp_value_t *val = xmalloc(sizeof(alisp_value_t));
 	val->type = ALISP_STRING;
-	val->value.string = xmalloc(strlen(str) + 1);
-	strcpy(val->value.string, str);
+	val->value.string = xstrdup(str);
 	return val;
 }
 
@@ -196,12 +194,10 @@ alisp_value_t *alisp_copy(alisp_value_t *val)
 		copy->value.number = val->value.number;
 		break;
 	case ALISP_SYMBOL:
-		copy->value.symbol = xmalloc(strlen(val->value.symbol) + 1);
-		strcpy(copy->value.symbol, val->value.symbol);
+		copy->value.symbol = xstrdup(val->value.symbol);
 		break;
 	case ALISP_STRING:
-		copy->value.string = xmalloc(strlen(val->value.string) + 1);
-		strcpy(copy->value.string, val->value.string);
+		copy->value.string = xstrdup(val->value.string);
 		break;
 	case ALISP_PRIMITIVE:
 		copy->value.primitive = val->value.primitive;
@@ -1074,9 +1070,10 @@ alisp_value_t *alisp_execute(const char* content, alisp_env_t env)
 		}
 
 		// Evaluate the expression
-		alisp_value_t *result = alisp_eval(expr, env);
+		alisp_value_t *eval_result = alisp_eval(expr, env);
 		
-		// Free the expression but keep the result
+		// Copy result before freeing expr, since result may be a sub-node of expr
+		alisp_value_t *result = eval_result ? alisp_copy(eval_result) : NULL;
 		alisp_free(expr);
 		
 		// If this is not a null result, store it as the last result
@@ -1087,21 +1084,18 @@ alisp_value_t *alisp_execute(const char* content, alisp_env_t env)
 			{
 				alisp_free(last_result);
 			}
-			// Copy the result to preserve it after environment is destroyed
-			last_result = alisp_copy(result);
+			// Keep the copy as the last result
+			last_result = result;
 		}
 		else
 		{
-			// Free the null result since we don't need to keep it
+			// Free the null/copy result since we don't need to keep it
 			if (result)
 			{
 				alisp_free(result);
 			}
 		}
 	}
-	
-	// Clean up environment
-	alisp_destroy(env);
-	
+
 	return last_result;
 }

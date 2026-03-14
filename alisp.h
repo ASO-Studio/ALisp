@@ -75,6 +75,7 @@ alisp_value_t *alisp_make_error(const char *msg);
 // Utility functions
 int alisp_eq(alisp_value_t *a, alisp_value_t *b);
 int alisp_equal(alisp_value_t *a, alisp_value_t *b);
+alisp_value_t *alisp_copy(alisp_value_t *val);
 
 // Environment functions
 alisp_env_t alisp_make_env(alisp_env_t outer);
